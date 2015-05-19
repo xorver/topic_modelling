@@ -79,17 +79,12 @@ mm = corpora.MmCorpus('/tmp/pap.mm')
 print(mm)
 
 # LSI
-print("######")
 lsi = models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=400)
-lsi.print_topics(10)
 
 # LDA
-print("######")
 lda = models.ldamodel.LdaModel(corpus=mm, id2word=dictionary, num_topics=100, update_every=1, chunksize=10000, passes=1)
-lda.print_topics(10)
 
 # Prepare indexes
-print("######")
 index_lsi = similarities.MatrixSimilarity(lsi[corpus])
 index_lsi.save('/tmp/lsi.index')
 index_lsi = similarities.MatrixSimilarity.load('/tmp/lsi.index')
@@ -99,9 +94,9 @@ index_lda = similarities.MatrixSimilarity.load('/tmp/lda.index')
 
 # Find
 i = 2
-n = 1
-m = 1
-base_bow = corpus[i]
+n = 3
+m = 5
+base_bow = dictionary.doc2bow(notice_counters[i].elements())
 base_lsi = lsi[base_bow]
 base_lda = lda[base_bow]
 sims_lsi = index_lsi[base_lsi]
