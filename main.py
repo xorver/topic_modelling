@@ -68,13 +68,14 @@ for notice in notice_counters:
 # prepare BOW
 texts = map(lambda x: x.elements(), notice_counters)
 dictionary = corpora.Dictionary(texts)
-dictionary.save('/tmp/deerwester.dict') # store the dictionary, for future reference
+dictionary.save('/tmp/pap.dict') # store the dictionary, for future reference
+dictionary = corpora.Dictionary('/tmp/pap.dict')
 print(dictionary)
 
 # prepare corpus
 corpus = [dictionary.doc2bow(counter.elements()) for counter in notice_counters]
-corpora.MmCorpus.serialize('/tmp/deerwester.mm', corpus) # store to disk, for later use
-mm = corpora.MmCorpus('/tmp/deerwester.mm')
+corpora.MmCorpus.serialize('/tmp/pap.mm', corpus) # store to disk, for later use
+mm = corpora.MmCorpus('/tmp/pap.mm')
 print(mm)
 
 # LSI
