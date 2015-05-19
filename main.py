@@ -62,14 +62,14 @@ for notice in notice_counters:
 # remove singles and >70%
 for notice in notice_counters:
     for elem in list(notice):
-        if (global_counter[elem] == 1) or (global_counter[elem] > 0.7 * len(notice_counters)):
+        if (global_counter[elem] == 1) or (global_counter[elem] > (0.7 * len(notice_counters))):
             del notice[elem]
 
 # prepare BOW
 texts = map(lambda x: x.elements(), notice_counters)
 dictionary = corpora.Dictionary(texts)
 dictionary.save('/tmp/pap.dict') # store the dictionary, for future reference
-dictionary = corpora.Dictionary('/tmp/pap.dict')
+dictionary = corpora.Dictionary.load('/tmp/pap.dict')
 print(dictionary)
 
 # prepare corpus
@@ -79,7 +79,7 @@ mm = corpora.MmCorpus('/tmp/pap.mm')
 print(mm)
 
 # LSI
-lsi = models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=400)
+lsi = models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=100)
 
 # LDA
 lda = models.ldamodel.LdaModel(corpus=mm, id2word=dictionary, num_topics=100, update_every=1, chunksize=10000, passes=1)
@@ -93,19 +93,30 @@ index_lda.save('/tmp/lda.index')
 index_lda = similarities.MatrixSimilarity.load('/tmp/lda.index')
 
 # Find
-i = 2
+i = 1
 n = 3
 m = 5
+
 base_bow = dictionary.doc2bow(notice_counters[i].elements())
 base_lsi = lsi[base_bow]
-base_lda = lda[base_bow]
 sims_lsi = index_lsi[base_lsi]
-sims_lda = index_lda[base_lda]
 sims_lsi = sorted(enumerate(sims_lsi), key=lambda item: -item[1])
-sims_lda = sorted(enumerate(sims_lda), key=lambda item: -item[1])
 print("######")
 for item in sims_lsi[:n]:
     print notice_text[item[0]]
+print("^^^^^^")
+sorted_base_lsi = sorted(base_lsi, key=lambda item: -item[1])
+for item in sorted_base_lsi[:m]:
+    print lsi.print_topic(item[0])
+
+
+base_lda = lda[base_bow]
+sims_lda = index_lda[base_lda]
+sims_lda = sorted(enumerate(sims_lda), key=lambda item: -item[1])
 print("######")
 for item in sims_lda[:n]:
     print notice_text[item[0]]
+print("^^^^^^")
+sorted_base_lda = sorted(base_lda, key=lambda item: -item[1])
+for item in sorted_base_lda[:m]:
+    print lda.print_topic(item[0])
