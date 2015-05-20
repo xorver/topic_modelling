@@ -47,7 +47,7 @@ with open("lab8/odm_utf8.txt") as file:
 # read pap
 with open("lab8/pap.txt") as file:
     text = file.read()
-notice_text = re.split(r'#.*', text)
+notice_text = re.split(r'#.*', text)[1:]
 notice_words = map(normalize_text, notice_text)
 notice_words = map(lambda words: map(lambda word: base_form.get(word, ''), words), notice_words)
 notice_words = map(lambda words: filter(lambda word: word != '', words), notice_words)
@@ -74,6 +74,8 @@ print(dictionary)
 
 # prepare corpus
 corpus = [dictionary.doc2bow(counter.elements()) for counter in notice_counters]
+tfidf = models.TfidfModel(corpus)
+corpus = tfidf[corpus]
 corpora.MmCorpus.serialize('/tmp/pap.mm', corpus) # store to disk, for later use
 mm = corpora.MmCorpus('/tmp/pap.mm')
 print(mm)
@@ -82,25 +84,28 @@ print(mm)
 lsi = models.lsimodel.LsiModel(corpus=mm, id2word=dictionary, num_topics=100)
 
 # LDA
-lda = models.ldamodel.LdaModel(corpus=mm, id2word=dictionary, num_topics=100, update_every=1, chunksize=10000, passes=1)
+lda = models.ldamodel.LdaModel(corpus=mm, id2word=dictionary, num_topics=400, update_every=1, chunksize=10000, passes=1)
 
 # Prepare indexes
 index_lsi = similarities.MatrixSimilarity(lsi[corpus])
 index_lsi.save('/tmp/lsi.index')
 index_lsi = similarities.MatrixSimilarity.load('/tmp/lsi.index')
+
 index_lda = similarities.MatrixSimilarity(lda[corpus])
 index_lda.save('/tmp/lda.index')
 index_lda = similarities.MatrixSimilarity.load('/tmp/lda.index')
 
 # Find
-i = 1
+i = 122 #35
 n = 3
-m = 5
+m = 4
 
 base_bow = dictionary.doc2bow(notice_counters[i].elements())
-base_lsi = lsi[base_bow]
+base_lsi = lsi[tfidf[base_bow]]
 sims_lsi = index_lsi[base_lsi]
 sims_lsi = sorted(enumerate(sims_lsi), key=lambda item: -item[1])
+print("######")
+print(notice_text[i])
 print("######")
 for item in sims_lsi[:n]:
     print notice_text[item[0]]
@@ -110,13 +115,13 @@ for item in sorted_base_lsi[:m]:
     print lsi.print_topic(item[0])
 
 
-base_lda = lda[base_bow]
+base_lda = lda[tfidf[base_bow]]
 sims_lda = index_lda[base_lda]
 sims_lda = sorted(enumerate(sims_lda), key=lambda item: -item[1])
 print("######")
 for item in sims_lda[:n]:
     print notice_text[item[0]]
 print("^^^^^^")
-sorted_base_lda = sorted(base_lda, key=lambda item: -item[1])
+sorted_base_lda = sorted(base_lda, key=lambda item: -item[1]) # todo add -
 for item in sorted_base_lda[:m]:
     print lda.print_topic(item[0])
